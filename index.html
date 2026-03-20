@@ -5,9 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Selamat Hari Raya Idul Fitri</title>
   <style>
-    body {
+    /* Reset dasar */
+    *, *::before, *::after {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
+    }
+
+    /* Kunci background biar gak putih */
+    body {
       width: 100vw;
       height: 100vh; 
       font-family: 'Poppins', sans-serif;
@@ -18,6 +24,7 @@
       touch-action: manipulation;
     }
 
+    /* Kanvas Kembang Api */
     canvas {
       position: absolute;
       top: 0;
@@ -28,6 +35,7 @@
       background: transparent;
     }
 
+    /* Bintang */
     .stars { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
     .star {
       position: absolute; width: 2px; height: 2px; background: white; border-radius: 50%;
@@ -35,6 +43,7 @@
     }
     @keyframes twinkle { 0%,100% {opacity:.2} 50% {opacity:1} }
 
+    /* Bulan */
     .moon {
       position: absolute;
       top: 40%;
@@ -62,6 +71,7 @@
       box-shadow: inset -20px -10px 40px rgba(0,0,0,0.3);
     }
 
+    /* Kotak Ucapan */
     .container {
       position: absolute;
       top: 60%;
@@ -100,6 +110,7 @@
       line-height: 1.6;
     }
 
+    /* Tombol Buka */
     .btn {
       position: absolute;
       top: 70%;
@@ -128,8 +139,9 @@
 <body>
 
 <audio id="bgMusic" loop>
-  <source src="fitri.mp3" type="audio/mpeg">
+  <source src="nama-musik-lo.mp3" type="audio/mpeg">
 </audio>
+
 <div class="stars" id="stars"></div>
 <canvas id="fireworks"></canvas>
 <div class="moon" id="moon"></div>
@@ -148,6 +160,7 @@ const canvas = document.getElementById('fireworks');
 const ctx = canvas.getContext('2d');
 let particles = [];
 
+// Bikin kanvas responsif
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -155,6 +168,7 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
+// Bintang-bintang
 const starsContainer = document.getElementById("stars");
 for (let i = 0; i < 150; i++) {
   const star = document.createElement("div");
@@ -165,6 +179,7 @@ for (let i = 0; i < 150; i++) {
   starsContainer.appendChild(star);
 }
 
+// Efek Ngetik
 function typeEffect(element, text, speed = 40) {
   let i = 0;
   element.textContent = ""; 
@@ -178,6 +193,7 @@ function typeEffect(element, text, speed = 40) {
   typing();
 }
 
+// Bikin Partikel Kembang Api
 function createFirework(x, y) {
   const colors = ['#ff0000', '#ffd700', '#00ff00', '#00ffff', '#ff00ff', '#ffffff'];
   const color = colors[Math.floor(Math.random() * colors.length)];
@@ -193,6 +209,7 @@ function createFirework(x, y) {
   }
 }
 
+// Animasi Partikel
 function animate() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -200,7 +217,7 @@ function animate() {
     let p = particles[i];
     p.x += p.vx;
     p.y += p.vy;
-    p.vy += 0.05; 
+    p.vy += 0.05; // Efek gravitasi
     p.life -= 1.5;
 
     ctx.beginPath();
@@ -217,39 +234,55 @@ function animate() {
   requestAnimationFrame(animate);
 }
 
-window.addEventListener('click', (e) => {
-  if(e.target.id === 'startBtn') return;
-  createFirework(e.clientX, e.clientY);
+// DETEKSI KLIK & SENTUH (Buat PC & HP)
+['mousedown', 'touchstart'].forEach(evt => {
+  window.addEventListener(evt, (e) => {
+    if(e.target.id === 'startBtn') return; 
+
+    // Ambil kordinat x,y dari mouse (PC) atau sentuhan (HP)
+    let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    
+    if(clientX && clientY) createFirework(clientX, clientY);
+  }, {passive: false});
 });
 
+// FUNGSI UTAMA SAAT TOMBOL DIKLIK
 function start(e) {
-  if(e) e.stopPropagation(); 
+  if(e) {
+      e.preventDefault();
+      e.stopPropagation(); 
+  }
 
-  // --- PLAY MUSIK NYA DI SINI BRO ---
+  // Nyalain Musik
   const bgMusic = document.getElementById('bgMusic');
-  // Pake catch biar browser gak error kalo file MP3-nya belum lo masukin
-  bgMusic.play().catch(error => console.log("Musik belum di-load atau diblokir browser"));
-  // ----------------------------------
+  if(bgMusic) {
+      bgMusic.play().catch(error => console.log("Musik dipause browser: ", error));
+  }
 
+  // Sembunyiin tombol & munculin konten
   document.getElementById('startBtn').style.display = 'none';
-  
   const content = document.getElementById('content');
   content.style.display = 'block';
   setTimeout(() => content.style.opacity = '1', 50);
 
+  // Bulan naik
   document.getElementById('moon').classList.add('up');
 
+  // Siapin Teks (Rumus Tahun Hijriah Otomatis)
   const year = new Date().getFullYear();
   const hijriYear = Math.floor((year - 622) * 33 / 32);
   
   const mainText = "Kami sekeluarga mengucapkan\nSelamat Hari Raya Idul Fitri " + hijriYear + " H";
   const subText = "Mohon maaf lahir dan batin, apabila ada salah kata dan perbuatan yang pernah menyakiti.\n\nPergi ke taman memetik melati,\nHarumnya semerbak di pagi hari.\nDi hari fitri kita sucikan hati,\nSemoga bahagia menyertai hari ini.\n\n" + year + " M";
 
+  // Jalanin efek ngetik
   typeEffect(document.getElementById('textMain'), mainText, 45);
   setTimeout(() => {
     typeEffect(document.getElementById('textSub'), subText, 25);
   }, 2000);
 
+  // Kembang api otomatis muncul tiap 1,2 detik
   setInterval(() => {
     createFirework(
       Math.random() * canvas.width, 
@@ -258,6 +291,7 @@ function start(e) {
   }, 1200);
 }
 
+// Mulai render kanvas kembang api
 animate();
 </script>
 
