@@ -225,11 +225,8 @@ window.addEventListener('click', (e) => {
 function start(e) {
   if(e) e.stopPropagation(); 
 
-  // --- PLAY MUSIK NYA DI SINI BRO ---
   const bgMusic = document.getElementById('bgMusic');
-  // Pake catch biar browser gak error kalo file MP3-nya belum lo masukin
   bgMusic.play().catch(error => console.log("Musik belum di-load atau diblokir browser"));
-  // ----------------------------------
 
   document.getElementById('startBtn').style.display = 'none';
   
