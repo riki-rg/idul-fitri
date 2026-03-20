@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Selamat Hari Raya Idul Fitri</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      /* --- PAKSA BACKGROUND GRADASI BIRU-HITAM LO MUNCUL --- */
+      background: radial-gradient(circle at center, #0b1d3a, #000814) !important;
+      overflow: hidden;
+      color: white;
+      touch-action: manipulation;
+    }
+
+    /* Kanvas Kembang Api - Dibuat transparan total */
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1; /* Di atas background, di bawah bulan/konten */
+      pointer-events: none; /* Biar gak nge-blok klik di tombol/bintang */
+      background: transparent !important; /* Pastikan kanvasnya transparan */
+    }
+
+    .stars { position: absolute; width: 100%; height: 100%; z-index: 0; }
+    .star {
+      position: absolute; width: 2px; height: 2px; background: white; border-radius: 50%;
+      animation: twinkle 2s infinite;
+    }
+    @keyframes twinkle { 0%,100% {opacity:.2} 50% {opacity:1} }
+
+    /* PERBAIKAN BULAN JADI KACA */
+    .moon {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 140px;
+      height: 140px;
+      /* Background kaca */
+      background: rgba(255, 255, 255, 0.7) !important;
+      backdrop-filter: blur(5px);
+      border-radius: 50%;
+      box-shadow: 0 0 60px rgba(255,255,255,0.8);
+      z-index: 2; 
+      transition: all 1.5s ease;
+    }
+
+    .moon.up {
+      top: 20%;
+    }
+
+    .moon::after {
+      content: "";
+      position: absolute;
+      width: 100%; height: 100%; border-radius: 50%;
+      box-shadow: inset -20px -10px 40px rgba(0,0,0,0.2);
+    }
+
+    .container {
+      position: absolute;
+      top: 65%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 10; 
+      max-width: 90%;
+      /* Keadaan awal tersembunyi */
+      display: none;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    /* PERBAIKAN KOTAK KACA JADI TRANSPARAN */
+    .glass {
+      backdrop-filter: blur(15px);
+      /* Background kaca lebih tipis */
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      line-height: 1.6;
+      margin: 0;
+      /* Judul utama emas agar lebih kontras */
+      color: gold !important;
+    }
+
+    p {
+      font-size: 0.95rem;
+      margin-top: 10px;
+      white-space: pre-line;
+    }
+
+    .btn {
+      position: absolute;
+      top: 75%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 20px;
+      border: none;
+      background: gold;
+      color: black;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      animation: pulse 2s infinite;
+      z-index: 20; 
+      /* Tombol terlihat pertama kali */
+      display: block !important;
+    }
+
+    @keyframes pulse {
+      0% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.1); }
+      100% { transform: translateX(-50%) scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+<canvas id="fireworks"></canvas>
+<div class="moon" id="moon"></div>
+
+<button class="btn" id="startBtn" onclick="start()">Buka Ucapan ✨</button>
+
+<div class="container" id="content">
+  <div class="glass">
+    <h1 id="textMain"></h1>
+    <p id="textSub"></p>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('fireworks');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const starsContainer = document.getElementById("stars");
+for (let i = 0; i < 150; i++) {
+  const star = document.createElement("div");
+  star.classList.add("star");
+  star.style.top = Math.random() * 100 + "%";
+  star.style.left = Math.random() * 100 + "%";
+  star.style.animationDuration = (Math.random() * 3 + 2) + "s";
+  starsContainer.appendChild(star);
+}
+
+// PERBAIKAN BUG SPASI: textContent dipastikan aman
+function typeEffect(element, text, speed = 30) {
+  let i = 0;
+  element.textContent = ""; 
+  function typing() {
+    if (i < text.length) {
+      element.textContent += text.charAt(i);
+      i++;
+      setTimeout(typing, speed);
+    }
+  }
+  typing();
+}
+
+function createFirework(x, y) {
+  const colors = ['#ff0000', '#ffd700', '#00ff00', '#00ffff', '#ff00ff', '#ffffff'];
+  const color = colors[Math.floor(Math.random() * colors.length)];
+  for (let i = 0; i < 40; i++) {
+    particles.push({
+      x: x,
+      y: y,
+      vx: (Math.random() - 0.5) * 8,
+      vy: (Math.random() - 0.5) * 8,
+      color: color,
+      life: 100
+    });
+  }
+}
+
+function animate() {
+  // Pake clearRect biar kanvasnya transparan total, gak nutup background
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  particles.forEach((p, i) => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.08; 
+    p.life -= 1.5;
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.life / 100; 
+    ctx.fill();
+    ctx.globalAlpha = 1; 
+
+    if (p.life <= 0) particles.splice(i, 1);
+  });
+  requestAnimationFrame(animate);
+}
+
+function start() {
+  // Sembunyiin tombol asli
+  document.getElementById('startBtn').style.display = 'none';
+  
+  // Tampilin konten dengan transisi halus
+  const content = document.getElementById('content');
+  content.style.display = 'block';
+  setTimeout(() => content.style.opacity = '1', 100);
+
+  document.getElementById('moon').classList.add('up');
+
+  const year = new Date().getFullYear();
+  // Rumus Hijriah sederhana lo (Gue balikin)
+  const hijriYear = Math.floor((year - 622) * 33 / 32);
+  const mainText = "Kami sekeluarga mengucapkan Selamat Hari Raya Idul Fitri " + hijriYear + " H";
+  const subText = "Mohon maaf lahir dan batin, apabila ada salah kata dan perbuatan yang pernah menyakiti.\n\nPergi ke taman memetik melati,\nHarumnya semerbak di pagi hari.\nDi hari fitri kita sucikan hati,\nSemoga bahagia menyertai hari ini.\n\n" + year + " M";
+
+  typeEffect(document.getElementById('textMain'), mainText, 40);
+  setTimeout(() => {
+    typeEffect(document.getElementById('textSub'), subText, 20);
+  }, 1500);
+
+  setInterval(() => {
+    createFirework(Math.random() * canvas.width, Math.random() * canvas.height * 0.4);
+  }, 1500);
+}
+
+// Jalankan animasi
+animate();
+</script>
+
+</body>
+</html>
