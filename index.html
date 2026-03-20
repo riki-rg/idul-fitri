@@ -5,37 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Selamat Hari Raya Idul Fitri</title>
   <style>
-    /* CSS RESET - Biar gak ada style bawaan browser yang ganggu */
-    *, *::before, *::after {
-      box-sizing: border-radius;
+    /* Kunci utamanya di sini bro! */
+    body {
       margin: 0;
       padding: 0;
-    }
-
-    body {
+      width: 100vw;
+      height: 100vh; /* Maksa background buat nutupin full layar */
       font-family: 'Poppins', sans-serif;
-      /* --- BAGIAN BACKGROUND --- */
-      /* Fallback warna solid kalau gradient gagal */
-      background-color: #000814; 
-      /* Gradient linear yang lebih aman buat browser */
-      background-image: linear-gradient(to bottom right, #0b1d3a, #000814);
-      /* ------------------------- */
+      background-color: #0b1d3a; /* Warna cadangan (fallback) */
+      background: radial-gradient(circle at center, #0b1d3a, #000814);
       overflow: hidden;
       color: white;
       touch-action: manipulation;
     }
 
-    /* Kanvas Kembang Api - Di atas background, di bawah bulan/konten */
     canvas {
       position: absolute;
       top: 0;
       left: 0;
+      width: 100%;
+      height: 100%;
       z-index: 1;
-      pointer-events: none; 
-      background: transparent; /* Kanvas harus transparan */
+      background: transparent;
     }
 
-    .stars { position: absolute; width: 100%; height: 100%; z-index: 0; }
+    .stars { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
     .star {
       position: absolute; width: 2px; height: 2px; background: white; border-radius: 50%;
       animation: twinkle 2s infinite;
@@ -53,11 +47,13 @@
       border-radius: 50%;
       box-shadow: 0 0 60px rgba(255,255,255,0.8);
       z-index: 2; 
-      transition: all 1.5s ease;
+      transition: top 1.5s ease, transform 1.5s ease;
+      pointer-events: none;
     }
 
     .moon.up {
       top: 20%;
+      transform: translate(-50%, -50%) scale(0.8);
     }
 
     .moon::after {
@@ -69,57 +65,63 @@
 
     .container {
       position: absolute;
-      top: 65%;
+      top: 60%;
       left: 50%;
       transform: translate(-50%, -50%);
       text-align: center;
       z-index: 10; 
-      max-width: 90%;
+      width: 90%;
+      max-width: 500px;
       display: none;
       opacity: 0;
       transition: opacity 1s ease;
+      pointer-events: none;
     }
 
     .glass {
       backdrop-filter: blur(10px);
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.1);
       border: 1px solid rgba(255,255,255,0.2);
       border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      padding: 25px 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
     h1 {
-      font-size: 1.5rem;
-      line-height: 1.6;
+      font-size: 1.4rem;
+      line-height: 1.5;
       margin: 0;
+      color: #ffd700; /* Warna emas */
     }
 
     p {
       font-size: 0.95rem;
-      margin-top: 10px;
+      margin-top: 15px;
       white-space: pre-line;
+      line-height: 1.6;
     }
 
     .btn {
       position: absolute;
-      top: 75%;
+      top: 70%;
       left: 50%;
       transform: translateX(-50%);
-      padding: 12px 20px;
+      padding: 12px 25px;
       border: none;
-      background: gold;
+      background: linear-gradient(45deg, #ffd700, #ffaa00);
       color: black;
-      border-radius: 20px;
+      border-radius: 30px;
       cursor: pointer;
       font-weight: bold;
+      font-size: 1rem;
       animation: pulse 2s infinite;
       z-index: 20; 
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
     }
 
     @keyframes pulse {
       0% { transform: translateX(-50%) scale(1); }
-      50% { transform: translateX(-50%) scale(1.1); }
+      50% { transform: translateX(-50%) scale(1.05); }
       100% { transform: translateX(-50%) scale(1); }
     }
   </style>
@@ -130,7 +132,7 @@
 <canvas id="fireworks"></canvas>
 <div class="moon" id="moon"></div>
 
-<button class="btn" id="startBtn" onclick="start()">Buka Ucapan ✨</button>
+<button class="btn" id="startBtn" onclick="start(event)">Buka Ucapan ✨</button>
 
 <div class="container" id="content">
   <div class="glass">
@@ -144,6 +146,7 @@ const canvas = document.getElementById('fireworks');
 const ctx = canvas.getContext('2d');
 let particles = [];
 
+// Bikin kanvas responsif tanpa merusak background
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -151,6 +154,7 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
+// Bintang
 const starsContainer = document.getElementById("stars");
 for (let i = 0; i < 150; i++) {
   const star = document.createElement("div");
@@ -161,24 +165,25 @@ for (let i = 0; i < 150; i++) {
   starsContainer.appendChild(star);
 }
 
-// PERBAIKAN: Gunakan textContent untuk menghindari masalah whitespace
-function typeEffect(element,text,speed=30){
-  let i=0;
-  element.textContent=""; // Clear text Content
-  function typing(){
-    if(i<text.length){
-      element.textContent+=text.charAt(i); // Update text Content
+// Efek ngetik teks
+function typeEffect(element, text, speed = 40) {
+  let i = 0;
+  element.textContent = ""; 
+  function typing() {
+    if (i < text.length) {
+      element.textContent += text.charAt(i);
       i++;
-      setTimeout(typing,speed);
+      setTimeout(typing, speed);
     }
   }
   typing();
 }
 
+// Logika kembang api
 function createFirework(x, y) {
   const colors = ['#ff0000', '#ffd700', '#00ff00', '#00ffff', '#ff00ff', '#ffffff'];
   const color = colors[Math.floor(Math.random() * colors.length)];
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 50; i++) {
     particles.push({
       x: x,
       y: y,
@@ -190,53 +195,72 @@ function createFirework(x, y) {
   }
 }
 
+// Render partikel
 function animate() {
+  // Hanya menghapus area kanvas, BUKAN menimpa warna background body
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  particles.forEach((p, i) => {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
     p.x += p.vx;
     p.y += p.vy;
-    p.vy += 0.08; 
+    p.vy += 0.05; // Gravitasi
     p.life -= 1.5;
 
     ctx.beginPath();
     ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
     ctx.fillStyle = p.color;
-    ctx.globalAlpha = p.life / 100; 
+    ctx.globalAlpha = Math.max(0, p.life / 100); 
     ctx.fill();
-    ctx.globalAlpha = 1; 
+    ctx.globalAlpha = 1;
 
-    if (p.life <= 0) particles.splice(i, 1);
-  });
+    if (p.life <= 0) {
+      particles.splice(i, 1);
+    }
+  }
   requestAnimationFrame(animate);
 }
 
-function start() {
+// Event untuk kembang api saat di-klik/tap di mana aja (kecuali tombol)
+window.addEventListener('click', (e) => {
+  if(e.target.id === 'startBtn') return;
+  createFirework(e.clientX, e.clientY);
+});
+
+// Aksi buka ucapan
+function start(e) {
+  if(e) e.stopPropagation(); 
+
   document.getElementById('startBtn').style.display = 'none';
   
   const content = document.getElementById('content');
   content.style.display = 'block';
-  setTimeout(() => content.style.opacity = '1', 100);
+  setTimeout(() => content.style.opacity = '1', 50);
 
   document.getElementById('moon').classList.add('up');
 
   const year = new Date().getFullYear();
+  // Rumus estimasi Hijriah (2026 -> 1447 H)
   const hijriYear = Math.floor((year - 622) * 33 / 32);
-  const mainText = "Kami sekeluarga mengucapkan Selamat Hari Raya Idul Fitri " + hijriYear + " H";
-  const subText = "Mohon maaf lahir dan batin, apabila ada salah kata dan perbuatan yang pernah menyakiti.\n\nPergi ke taman memetik melati,\nHarumnya semerbak di pagi hari.\nDi hari fitri kita sucikan hati,\nSemoga bahagia menyertai hari ini.\n\n" + year + " M";
+  
+  const mainText = "Kami sekeluarga mengucapkan\nSelamat Hari Raya Idul Fitri " + hijriYear + " H";
+  const subText = "Mohon maaf lahir dan batin, apabila ada salah kata dan perbuatan yang pernah menyakiti.\n\nPergi ke taman memetik melati,\nHarumnya semerbak di pagi hari.\nDi hari fitri kita sucikan hati,\nSemoga bahagia menyertai hari ini.\n\n" + "~Rizqy Maulana Hakim";
 
-  // PERBAIKAN: textMain dan textSub sekarang diperbarui
-  typeEffect(document.getElementById('textMain'), mainText, 40);
+  typeEffect(document.getElementById('textMain'), mainText, 45);
   setTimeout(() => {
-    typeEffect(document.getElementById('textSub'), subText, 20);
-  }, 1500);
+    typeEffect(document.getElementById('textSub'), subText, 25);
+  }, 2000);
 
+  // Auto kembang api
   setInterval(() => {
-    createFirework(Math.random() * canvas.width, Math.random() * canvas.height * 0.4);
-  }, 1500);
+    createFirework(
+      Math.random() * canvas.width, 
+      (Math.random() * canvas.height * 0.5) // Ledakan di area paruh atas
+    );
+  }, 1200);
 }
 
-// Jalankan animasi
+// Jalankan animasi kanvas
 animate();
 </script>
 
